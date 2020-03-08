@@ -146,10 +146,13 @@ public class AnalyzeWorker {
      * а значение - число нот этой длительности.
      */
     public static HashMap<Integer, Integer> getDurationAnalyze(List<Note> track, MidiFile midiFile) {
+        HashMap<Integer, Integer> durationToCount = new HashMap<>();
+        if (track == null) {
+            return durationToCount;
+        }
         Tempo tempo = getTempo(midiFile);
         float bpm = tempo.getBpm();
 
-        HashMap<Integer, Integer> durationToCount = new HashMap<>();
         for (Note n : track) {
             Integer noteMsDuration = SongUtils.tickToMs(bpm, midiFile.getResolution(), n.durationTicks());
             if (durationToCount.containsKey(noteMsDuration)) {
@@ -159,6 +162,29 @@ public class AnalyzeWorker {
             }
         }
         return durationToCount;
+    }
+
+    /**
+     * <b>Получить количество вхождений нот</b>
+     *
+     * @param track трек для анализа (в виде списка нот)
+     * @return HashMap, где ключ - NoteSign, а значение - количество его появлений в треке.
+     */
+    public static HashMap<NoteSign, Integer> getNumberOfNotes(List<Note> track) {
+        HashMap<NoteSign, Integer> numberOfNotes = new HashMap<>();
+        if (track == null) {
+            return numberOfNotes;
+        }
+
+        for (Note n : track) {
+            NoteSign current = n.sign();
+            if (numberOfNotes.containsKey(current)) {
+                numberOfNotes.put(current, numberOfNotes.get(current) + 1);
+            } else {
+                numberOfNotes.put(current, 1);
+            }
+        }
+        return numberOfNotes;
     }
 
 }

@@ -160,9 +160,9 @@ public class AnalyzeWorkerTest {
         ).isEqualTo(225827);
     }
 
-    ///////////////////////////////////////////////////////////////////////
-    //      getDurationAnalyze(List<Note> track, MidiFile midiFile)     //
-    /////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+    //      getDurationAnalyze(List<Note> track, MidiFile midiFile) Test    //
+    /////////////////////////////////////////////////////////////////////////
     @Test
     public void whenUYCVoiceTrackReturn2306ms1note() {
         HashMap<Integer, Integer> durations = AnalyzeWorker.getDurationAnalyze(uYCVoiceTrack, uYCMidiFile);
@@ -179,4 +179,31 @@ public class AnalyzeWorkerTest {
         //Assertions.assertThat(durations.get(172)).isEqualTo(151);
     }
 
+    @Test
+    public void whenEmptyTrackReturnEmptyHashmap() {
+        Assertions.assertThat(AnalyzeWorker.getDurationAnalyze(null, emptyMidiFile).isEmpty()).isEqualTo(true);
+    }
+
+    ////////////////////////////////////////////////////////
+    //      getNumberOfNotes(List<Note> track) Test      //
+    //////////////////////////////////////////////////////
+    @Test
+    public void whenTwoVoiceTrackReturnAndBothHad5UniqueNote() {
+        HashMap<NoteSign, Integer> control = new HashMap<>();
+        control.put(NoteSign.C_3, 1);
+        control.put(NoteSign.D_3, 1);
+        control.put(NoteSign.E_3, 1);
+        control.put(NoteSign.F_3, 1);
+        control.put(NoteSign.G_3, 1);
+        List<List<Note>> voices = AnalyzeWorker.getVoiceTracks(twoVoicesMidiFile);
+        HashMap<NoteSign, Integer> numberOfNotes = AnalyzeWorker.getNumberOfNotes(voices.get(0));
+        HashMap<NoteSign, Integer> numberOfNotes1 = AnalyzeWorker.getNumberOfNotes(voices.get(1));
+        Assertions.assertThat(numberOfNotes).isEqualTo(numberOfNotes1).isEqualTo(control);
+        //Assertions.assertThat(durations.get(172)).isEqualTo(151);
+    }
+
+    @Test
+    public void whenEmptyTrackAgainReturnEmptyHashmap() {
+        Assertions.assertThat(AnalyzeWorker.getNumberOfNotes(null).isEmpty()).isEqualTo(true);
+    }
 }
