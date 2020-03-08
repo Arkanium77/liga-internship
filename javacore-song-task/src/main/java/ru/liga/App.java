@@ -2,22 +2,16 @@ package ru.liga;
 
 
 import com.leff.midi.MidiFile;
-import com.leff.midi.event.MidiEvent;
-import com.leff.midi.event.NoteOff;
-import com.leff.midi.event.NoteOn;
 import com.leff.midi.event.meta.Tempo;
 import ru.liga.songtask.domain.Note;
-import ru.liga.songtask.domain.NoteSign;
 import ru.liga.songtask.util.SongUtils;
+import ru.liga.songtask.worker.AnalyzeWorker;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
-import java.util.TreeSet;
-import java.util.concurrent.LinkedBlockingQueue;
+
+import static ru.liga.songtask.util.SongUtils.eventsToNotes;
 
 public class App {
 
@@ -28,7 +22,7 @@ public class App {
      * Tempo может быть только один
      */
     public static void exMain() throws IOException {
-        MidiFile midiFile = new MidiFile(new FileInputStream("D:\\Java\\liga-internship\\javacore-song-task\\src\\main\\resources\\Wrecking Ball.mid"));
+        MidiFile midiFile = new MidiFile(new FileInputStream("D:\\Java\\liga-internship\\javacore-song-task\\src\\main\\resources\\Underneath Your Clothes.mid"));
         List<Note> notes = eventsToNotes(midiFile.getTracks().get(3).getEvents());
         Tempo last = (Tempo) midiFile.getTracks().get(0).getEvents().last();
         Note ninthNote = notes.get(8);
@@ -37,61 +31,47 @@ public class App {
         System.out.println(notes);
     }
 
-    public static void main(String[] args) {
-
-
+    public static void tyem() throws IOException {
+        MidiFile midiFile = new MidiFile(new FileInputStream("D:\\Java\\liga-internship\\javacore-song-task\\src\\main\\resources\\Underneath Your Clothes.mid"));
+        for (List<Note> i : AnalyzeWorker.getVoiceTracks(midiFile)) {
+            System.out.println(i);
+        }
 
     }
 
-    /**
-     * Этот метод, чтобы вы не афигели переводить эвенты в ноты
-     *
-     * @param events эвенты одного трека
-     * @return список нот
-     */
-    public static List<Note> eventsToNotes(TreeSet<MidiEvent> events) {
-        List<Note> vbNotes = new ArrayList<>();
+    public static void analyze(String path) {
 
-        Queue<NoteOn> noteOnQueue = new LinkedBlockingQueue<>();
-        for (MidiEvent event : events) {
-            if (event instanceof NoteOn || event instanceof NoteOff) {
-                if (isEndMarkerNote(event)) {
-                    NoteSign noteSign = NoteSign.fromMidiNumber(extractNoteValue(event));
-                    if (noteSign != NoteSign.NULL_VALUE) {
-                        NoteOn noteOn = noteOnQueue.poll();
-                        if (noteOn != null) {
-                            long start = noteOn.getTick();
-                            long end = event.getTick();
-                            vbNotes.add(
-                                    new Note(noteSign, start, end - start));
-                        }
-                    }
-                } else {
-                    noteOnQueue.offer((NoteOn) event);
-                }
+    }
+
+    public static void change(String path, int trans, double tempo) {
+
+    }
+
+    public static void main(String[] args) throws IOException {
+        tyem();
+        //argsReader(args);
+    }
+
+    private static void argsReader(String[] args) {
+        String action = args[1].toLowerCase().trim();
+        if (action.equals("analyze")) {
+            analyze(args[0]);
+        }
+        if (action.equals("change")) {
+            int trans;
+            double tempo;
+            try {
+                trans = Integer.parseInt(args[3]);
+            } catch (Exception e) {
+                trans = 0;
             }
-        }
-        return vbNotes;
-    }
-
-    private static Integer extractNoteValue(MidiEvent event) {
-        if (event instanceof NoteOff) {
-            return ((NoteOff) event).getNoteValue();
-        } else if (event instanceof NoteOn) {
-            return ((NoteOn) event).getNoteValue();
-        } else {
-            return null;
+            try {
+                tempo = Double.parseDouble(args[5]);
+            } catch (Exception e) {
+                tempo = 0;
+            }
+            change(args[0], trans, tempo);
         }
     }
 
-    private static boolean isEndMarkerNote(MidiEvent event) {
-        if (event instanceof NoteOff) {
-            return true;
-        } else if (event instanceof NoteOn) {
-            return ((NoteOn) event).getVelocity() == 0;
-        } else {
-            return false;
-        }
-
-    }
 }
