@@ -1,16 +1,19 @@
 package ru.liga.songtask.worker;
 
 import com.leff.midi.MidiFile;
+import com.leff.midi.event.meta.Tempo;
 import org.assertj.core.api.Assertions;
 import org.jasypt.contrib.org.apache.commons.codec_1_3.binary.Base64;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import ru.liga.songtask.domain.Note;
 import ru.liga.songtask.domain.NoteSign;
+import ru.liga.songtask.util.SongUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static ru.liga.songtask.util.SongUtils.eventsToNotes;
@@ -140,6 +143,40 @@ public class AnalyzeWorkerTest {
     public void whenUYCExtremumsReturn16() {
         NoteSign[] c = {NoteSign.G_SHARP_3, NoteSign.C_5};
         Assertions.assertThat(AnalyzeWorker.getRange(c)).isEqualTo(16);
+    }
+
+    ///////////////////////////////////////////////////
+    //      getTempo(MidiFile midiFile) Test        //
+    /////////////////////////////////////////////////
+    @Test
+    public void whenUYCLengthInMsWillBe225827() {
+        Tempo t = AnalyzeWorker.getTempo(uYCMidiFile);
+        Assertions.assertThat(
+                SongUtils.tickToMs(
+                        t.getBpm(),
+                        uYCMidiFile.getResolution(),
+                        uYCMidiFile.getLengthInTicks()
+                )
+        ).isEqualTo(225827);
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+    //      getDurationAnalyze(List<Note> track, MidiFile midiFile)     //
+    /////////////////////////////////////////////////////////////////////
+    @Test
+    public void whenUYCVoiceTrackReturn2306ms1note() {
+        HashMap<Integer, Integer> durations = AnalyzeWorker.getDurationAnalyze(uYCVoiceTrack, uYCMidiFile);
+        Assertions.assertThat(durations.get(2306)).isEqualTo(1);
+        //Assertions.assertThat(durations.get(172)).isEqualTo(151);
+    }
+
+    @Test
+    public void whenTwoVoiceTrackReturn5and5() {
+        List<List<Note>> voices = AnalyzeWorker.getVoiceTracks(twoVoicesMidiFile);
+        HashMap<Integer, Integer> durations1 = AnalyzeWorker.getDurationAnalyze(voices.get(0), twoVoicesMidiFile);
+        HashMap<Integer, Integer> durations2 = AnalyzeWorker.getDurationAnalyze(voices.get(1), twoVoicesMidiFile);
+        Assertions.assertThat(durations1.get(499)).isEqualTo(durations2.get(499)).isEqualTo(5);
+        //Assertions.assertThat(durations.get(172)).isEqualTo(151);
     }
 
 }

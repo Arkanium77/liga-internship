@@ -1,8 +1,10 @@
 package ru.liga.songtask.worker;
 
 import com.leff.midi.MidiFile;
+import com.leff.midi.event.meta.Tempo;
 import ru.liga.songtask.domain.Note;
 import ru.liga.songtask.domain.NoteSign;
+import ru.liga.songtask.util.SongUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,6 +22,7 @@ public class AnalyzeWorker {
      * @return {@code List<List<Note>>}, содержащий все треки для голоса ввиде списков нот.
      */
     public static List<List<Note>> getVoiceTracks(MidiFile midiFile) {
+
         List<List<Note>> allTracks = getAllTracksAsNoteLists(midiFile);
 
         return voiceTrackFinder(allTracks);
@@ -118,6 +121,44 @@ public class AnalyzeWorker {
     public static Integer getRange(List<Note> track) {
         NoteSign[] extremumNotes = getExtremumNoteSigns(track);
         return getRange(extremumNotes);
+    }
+
+    /**
+     * <b>Получить Tempo-event</b>
+     *
+     * @param midiFile файл для анализа
+     * @return Tempo-event, содержащий информацию о bpm.
+     */
+    static Tempo getTempo(MidiFile midiFile) {
+        Tempo tempo = (Tempo) (midiFile.getTracks().get(0).getEvents()).stream()
+                .filter(value -> value instanceof Tempo)
+                .findFirst()
+                .get();
+        return tempo;
+    }
+
+    /**
+     * <b>Получить HashMap Длительность\число нот</b>
+     *
+     * @param track    анализируемый трек в виде списка нот.
+     * @param midiFile файл, содержащий анализируемый трек
+     * @return HashMap, содержащий пары Integer\Integer, где ключ - длительность в ms,
+     * а значение - число нот этой длительности.
+     */
+    public static HashMap<Integer, Integer> getDurationAnalyze(List<Note> track, MidiFile midiFile) {
+        Tempo tempo = getTempo(midiFile);
+        float bpm = tempo.getBpm();
+
+        HashMap<Integer, Integer> durationToCount = new HashMap<>();
+        for (Note n : track) {
+            Integer noteMsDuration = SongUtils.tickToMs(bpm, midiFile.getResolution(), n.durationTicks());
+            if (durationToCount.containsKey(noteMsDuration)) {
+                durationToCount.put(noteMsDuration, durationToCount.get(noteMsDuration) + 1);
+            } else {
+                durationToCount.put(noteMsDuration, 1);
+            }
+        }
+        return durationToCount;
     }
 
 }
