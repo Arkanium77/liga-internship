@@ -74,6 +74,13 @@ public class AnalyzeWorker {
         return true;
     }
 
+    /**
+     * <b>Получить верхний и нижний экстремумы трека</b>
+     *
+     * @param track трек, представленный в виде списка нот
+     * @return пару нотных знаков, представляющих нижнюю и верхнюю границу диапазона,
+     * в случае, если в треке нет нот - null
+     */
     public static NoteSign[] getExtremumNoteSigns(List<Note> track) {
         HashMap<Integer, Note> midiOfNotes = new HashMap<>();
         for (Note n : track) {
@@ -87,6 +94,13 @@ public class AnalyzeWorker {
         return new NoteSign[]{min, max};
     }
 
+    /**
+     * <b>Получить диапазон </b> в полутонах
+     *
+     * @param extremeNotes нижняя и верхняя границы диапазона.
+     * @return целое число - количество полутонов в представленном диапазоне.
+     * В случае, если в треке нет нот - null
+     */
     public static Integer getRange(NoteSign[] extremeNotes) {
         if (extremeNotes == null) {
             return null;
@@ -94,6 +108,13 @@ public class AnalyzeWorker {
         return extremeNotes[1].getMidi() - extremeNotes[0].getMidi();
     }
 
+    /**
+     * <b>Получить диапазон </b> в полутонах
+     *
+     * @param track трек, представленный в виде списка нот
+     * @return целое число - количество полутонов в представленном диапазоне.
+     * В случае, если в треке нет нот - null
+     */
     public static Integer getRange(List<Note> track) {
         NoteSign[] extremumNotes = getExtremumNoteSigns(track);
         return getRange(extremumNotes);
