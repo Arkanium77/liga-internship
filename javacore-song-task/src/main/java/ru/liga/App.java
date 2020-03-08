@@ -2,45 +2,56 @@ package ru.liga;
 
 
 import com.leff.midi.MidiFile;
-import com.leff.midi.event.meta.Tempo;
 import ru.liga.songtask.domain.Note;
-import ru.liga.songtask.util.SongUtils;
+import ru.liga.songtask.domain.NoteSign;
 import ru.liga.songtask.worker.AnalyzeWorker;
 
-import java.io.FileInputStream;
+import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
-
-import static ru.liga.songtask.util.SongUtils.eventsToNotes;
+import java.util.Objects;
 
 public class App {
 
-    /**
-     * Это пример работы, можете всё стирать и переделывать
-     * Пример, чтобы убрать у вас начальный паралич разработки
-     * Также посмотрите класс SongUtils, он переводит тики в миллисекунды
-     * Tempo может быть только один
-     */
-    public static void exMain() throws IOException {
-        MidiFile midiFile = new MidiFile(new FileInputStream("D:\\Java\\liga-internship\\javacore-song-task\\src\\main\\resources\\Underneath Your Clothes.mid"));
-        List<Note> notes = eventsToNotes(midiFile.getTracks().get(3).getEvents());
-        Tempo last = (Tempo) midiFile.getTracks().get(0).getEvents().last();
-        Note ninthNote = notes.get(8);
-        System.out.println("Длительность девятой ноты (" + ninthNote.sign().fullName() + "): " + SongUtils.tickToMs(last.getBpm(), midiFile.getResolution(), ninthNote.durationTicks()) + "мс");
-        System.out.println("Все ноты:");
-        System.out.println(notes);
+    private static void getRangeWork(NoteSign[] extremum, int range) {
+        System.out.println("Диапазон:");
+        System.out.println("\tВерхняя нота: " + extremum[1].fullName());
+        System.out.println("\tНижняя нота: " + extremum[1].fullName());
+        System.out.println("\tДиапазон: " + range);
     }
 
-    public static void tyem() throws IOException {
-        MidiFile midiFile = new MidiFile(new FileInputStream("D:\\Java\\liga-internship\\javacore-song-task\\src\\main\\resources\\Underneath Your Clothes.mid"));
-        for (List<Note> i : AnalyzeWorker.getVoiceTracks(midiFile)) {
-            System.out.println(i);
+    private static void getDurationWork(HashMap<Integer, Integer> map) {
+        System.out.println("Количество нот по длительностям");
+        for (Integer i : map.keySet()) {
+            System.out.println("\t" + i + "ms: " + map.get(i));
         }
-
     }
 
-    public static void analyze(String path) {
+    private static void getNumberOfNotesWork(HashMap<NoteSign, Integer> map) {
+        System.out.println("Список нот с количеством вхождений:");
+        for (NoteSign i : map.keySet()) {
+            System.out.println("\t" + i.fullName() + ": " + map.get(i));
+        }
+    }
 
+    public static void analyze(String path) throws IOException {
+        MidiFile midiFile = new MidiFile(new File(path));
+        List<List<Note>> voices = AnalyzeWorker.getVoiceTracks(midiFile);
+        if (voices.size() == 0) {
+            System.out.println("Нет треков пригодных для исполнения голосом.");
+            return;
+        }
+        for (List<Note> track : voices) {
+            getRangeWork(
+                    Objects.requireNonNull(
+                            AnalyzeWorker.getExtremumNoteSigns(track)),
+                    Objects.requireNonNull(
+                            AnalyzeWorker.getRange(track))
+            );
+            getDurationWork(AnalyzeWorker.getDurationAnalyze(track, midiFile));
+            getNumberOfNotesWork(AnalyzeWorker.getNumberOfNotes(track));
+        }
     }
 
     public static void change(String path, int trans, double tempo) {
@@ -48,11 +59,16 @@ public class App {
     }
 
     public static void main(String[] args) throws IOException {
-        tyem();
-        //argsReader(args);
+        if (args.length > 1) {
+            argsReader(args);
+        } else {
+            System.out.println("Для запуска программы введите аргументы командной строки.\nНапример:");
+            System.out.println("..\\midi-analyzer.jar \"C:\\zombie.mid\" analyze");
+            System.out.println("..\\midi-analyzer.jar \"C:\\zombie.mid\" change -trans 2 -tempo 20");
+        }
     }
 
-    private static void argsReader(String[] args) {
+    private static void argsReader(String[] args) throws IOException {
         String action = args[1].toLowerCase().trim();
         if (action.equals("analyze")) {
             analyze(args[0]);
