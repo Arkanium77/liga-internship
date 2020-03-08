@@ -2,11 +2,9 @@ package ru.liga.songtask.worker;
 
 import com.leff.midi.MidiFile;
 import ru.liga.songtask.domain.Note;
+import ru.liga.songtask.domain.NoteSign;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
+import java.util.*;
 
 import static ru.liga.songtask.util.SongUtils.eventsToNotes;
 
@@ -20,9 +18,8 @@ public class AnalyzeWorker {
      */
     public static List<List<Note>> getVoiceTracks(MidiFile midiFile) {
         List<List<Note>> allTracks = getAllTracksAsNoteLists(midiFile);
-        List<List<Note>> voices = voiceTrackFinder(allTracks);
 
-        return voices;
+        return voiceTrackFinder(allTracks);
     }
 
     /**
@@ -73,4 +70,29 @@ public class AnalyzeWorker {
         }
         return true;
     }
+
+    public static NoteSign[] getExtremumNoteSigns(List<Note> track) {
+        HashMap<Integer, Note> midiOfNotes = new HashMap<>();
+        for (Note n : track) {
+            midiOfNotes.put(n.sign().getMidi(), n);
+        }
+        if(midiOfNotes.size()==0){
+            return null;
+        }
+        NoteSign min = midiOfNotes.get(Collections.min(midiOfNotes.keySet())).sign();
+        NoteSign max = midiOfNotes.get(Collections.max(midiOfNotes.keySet())).sign();
+        return new NoteSign[]{min, max};
+    }
+    public static Integer getRange(NoteSign [] extremeNotes){
+        if(extremeNotes==null){
+            return null;
+        }
+        return extremeNotes[1].getMidi()-extremeNotes[0].getMidi();
+    }
+
+    public static Integer getRange(List<Note> track){
+        NoteSign [] extremumNotes= getExtremumNoteSigns(track);
+        return getRange(extremumNotes);
+    }
+
 }
