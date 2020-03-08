@@ -2,8 +2,6 @@ package ru.liga.songtask.domain;
 
 
 import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
@@ -133,9 +131,7 @@ public enum NoteSign {
 
     public static NoteSign fromFrequency(float pitchInHz) {
         return Stream.of(values())
-                .min((n1, n2) ->
-                        Double.valueOf(Math.abs(n1.frequency_hz - pitchInHz))
-                                .compareTo(Math.abs(n2.frequency_hz - pitchInHz)))
+                .min(Comparator.comparingDouble(n -> Math.abs(n.frequency_hz - pitchInHz)))
                 .get();
     }
 

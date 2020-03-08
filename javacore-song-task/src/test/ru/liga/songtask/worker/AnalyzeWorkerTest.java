@@ -3,14 +3,12 @@ package ru.liga.songtask.worker;
 import com.leff.midi.MidiFile;
 import org.assertj.core.api.Assertions;
 import org.jasypt.contrib.org.apache.commons.codec_1_3.binary.Base64;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import ru.liga.songtask.domain.Note;
 import ru.liga.songtask.domain.NoteSign;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -104,22 +102,22 @@ public class AnalyzeWorkerTest {
     //      getExtremumNotes(List<Note> track) Test     //
     /////////////////////////////////////////////////////
     @Test
-    public void whenEmptyTrackReturnNull(){
+    public void whenEmptyTrackReturnNull() {
         List<Note> empty = AnalyzeWorker.getAllTracksAsNoteLists(emptyMidiFile).get(0);
         Assertions.assertThat(AnalyzeWorker.getExtremumNoteSigns(empty)).isEqualTo(null);
     }
 
     @Test
-    public void whenOneNoteC_1TrackReturnC_1andC_1(){
-        List<Note> oneNote=new ArrayList<>();
-        oneNote.add(new Note(NoteSign.C_1,0L,10L));
-        NoteSign [] c={NoteSign.C_1,NoteSign.C_1};
+    public void whenOneNoteC_1TrackReturnC_1andC_1() {
+        List<Note> oneNote = new ArrayList<>();
+        oneNote.add(new Note(NoteSign.C_1, 0L, 10L));
+        NoteSign[] c = {NoteSign.C_1, NoteSign.C_1};
         Assertions.assertThat(AnalyzeWorker.getExtremumNoteSigns(oneNote)).isEqualTo(c);
     }
 
     @Test
-    public void whenUYCTrackReturnG_SHARP_3andC_5(){
-        NoteSign [] c={NoteSign.G_SHARP_3,NoteSign.C_5};
+    public void whenUYCTrackReturnG_SHARP_3andC_5() {
+        NoteSign[] c = {NoteSign.G_SHARP_3, NoteSign.C_5};
         Assertions.assertThat(AnalyzeWorker.getExtremumNoteSigns(uYCVoiceTrack)).isEqualTo(c);
     }
 
@@ -127,20 +125,20 @@ public class AnalyzeWorkerTest {
     //      getRange(NoteSign [] extremeNotes) Test     //
     /////////////////////////////////////////////////////
     @Test
-    public void whenEmptyExtremumReturnNull(){
-        NoteSign [] noteSigns=null;
+    public void whenEmptyExtremumReturnNull() {
+        NoteSign[] noteSigns = null;
         Assertions.assertThat(AnalyzeWorker.getRange(noteSigns)).isEqualTo(null);
     }
 
     @Test
-    public void whenOneNoteExtremumReturn0(){
-        NoteSign [] c={NoteSign.C_1,NoteSign.C_1};
+    public void whenOneNoteExtremumReturn0() {
+        NoteSign[] c = {NoteSign.C_1, NoteSign.C_1};
         Assertions.assertThat(AnalyzeWorker.getRange(c)).isEqualTo(0);
     }
 
     @Test
-    public void whenUYCExtremumsReturn16(){
-        NoteSign [] c={NoteSign.G_SHARP_3,NoteSign.C_5};
+    public void whenUYCExtremumsReturn16() {
+        NoteSign[] c = {NoteSign.G_SHARP_3, NoteSign.C_5};
         Assertions.assertThat(AnalyzeWorker.getRange(c)).isEqualTo(16);
     }
 
