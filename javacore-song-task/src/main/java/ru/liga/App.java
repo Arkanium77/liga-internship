@@ -2,8 +2,11 @@ package ru.liga;
 
 
 import com.leff.midi.MidiFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.liga.songtask.domain.Note;
 import ru.liga.songtask.domain.NoteSign;
+import ru.liga.songtask.util.SongUtils;
 import ru.liga.songtask.worker.AnalyzeWorker;
 
 import java.io.File;
@@ -12,34 +15,37 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
+
 public class App {
+    private static Logger logger = LoggerFactory.getLogger(App.class);
 
     private static void getRangeWork(NoteSign[] extremum, int range) {
-        System.out.println("Диапазон:");
-        System.out.println("\tВерхняя нота: " + extremum[1].fullName());
-        System.out.println("\tНижняя нота: " + extremum[1].fullName());
-        System.out.println("\tДиапазон: " + range);
+        logger.info("Диапазон:");
+        logger.info("    Верхняя нота: " + extremum[1].fullName());
+        logger.info("    Нижняя нота: " + extremum[1].fullName());
+        logger.info("    Диапазон: " + range);
     }
 
     private static void getDurationWork(HashMap<Integer, Integer> map) {
-        System.out.println("Количество нот по длительностям");
+        logger.info("Количество нот по длительностям:");
         for (Integer i : map.keySet()) {
-            System.out.println("\t" + i + "ms: " + map.get(i));
+            logger.info("    " + i + "ms: " + map.get(i));
         }
     }
 
     private static void getNumberOfNotesWork(HashMap<NoteSign, Integer> map) {
-        System.out.println("Список нот с количеством вхождений:");
+        logger.info("Список нот с количеством вхождений:");
         for (NoteSign i : map.keySet()) {
-            System.out.println("\t" + i.fullName() + ": " + map.get(i));
+            logger.info("    " + i.fullName() + ": " + map.get(i));
         }
     }
 
     public static void analyze(String path) throws IOException {
+        logger.debug("Запущена процедура анализа");
         MidiFile midiFile = new MidiFile(new File(path));
         List<List<Note>> voices = AnalyzeWorker.getVoiceTracks(midiFile);
         if (voices.size() == 0) {
-            System.out.println("Нет треков пригодных для исполнения голосом.");
+            logger.info("Нет треков пригодных для исполнения голосом.");
             return;
         }
         for (List<Note> track : voices) {
@@ -55,16 +61,22 @@ public class App {
     }
 
     public static void change(String path, int trans, double tempo) {
+        logger.debug("Запущена процедура изменения файла {}, " +
+                        "с транспонированием на {} полутонов и изменением темпа на {}%"
+                , path, trans, tempo
+        );
 
     }
 
     public static void main(String[] args) throws IOException {
+        logger.debug("Программа запущена с параметрами {}", SongUtils.getStringFromArray(args));
         if (args.length > 1) {
             argsReader(args);
         } else {
-            System.out.println("Для запуска программы введите аргументы командной строки.\nНапример:");
-            System.out.println("..\\midi-analyzer.jar \"C:\\zombie.mid\" analyze");
-            System.out.println("..\\midi-analyzer.jar \"C:\\zombie.mid\" change -trans 2 -tempo 20");
+            logger.debug("Недостаточно данных для работы программы");
+            logger.info("Для запуска программы введите аргументы командной строки.\nНапример:");
+            logger.info("..\\midi-analyzer.jar \"C:\\zombie.mid\" analyze");
+            logger.info("..\\midi-analyzer.jar \"C:\\zombie.mid\" change -trans 2 -tempo 20");
         }
     }
 

@@ -3,6 +3,8 @@ package ru.liga.songtask.util;
 import com.leff.midi.event.MidiEvent;
 import com.leff.midi.event.NoteOff;
 import com.leff.midi.event.NoteOn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.liga.songtask.domain.Note;
 import ru.liga.songtask.domain.NoteSign;
 
@@ -13,6 +15,7 @@ import java.util.TreeSet;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class SongUtils {
+    private static Logger logger = LoggerFactory.getLogger(SongUtils.class);
 
     /**
      * Перевод тиков в миллисекунды
@@ -20,7 +23,7 @@ public class SongUtils {
      * @param bpm          - количество ударов в минуту (темп)
      * @param resolution   - midiFile.getResolution()
      * @param amountOfTick - то что переводим в миллисекунды
-     * @return
+     * @return целое число, длительность тиков в мс при заданном bpm
      */
     public static int tickToMs(float bpm, int resolution, long amountOfTick) {
         return (int) (((60 * 1000) / (bpm * resolution)) * amountOfTick);
@@ -50,7 +53,11 @@ public class SongUtils {
                         }
                     }
                 } else {
-                    noteOnQueue.offer((NoteOn) event);
+                    try {
+                        noteOnQueue.offer((NoteOn) event);
+                    } catch (ClassCastException e) {
+                        logger.debug(e.getMessage());
+                    }
                 }
             }
         }
@@ -75,6 +82,21 @@ public class SongUtils {
         } else {
             return false;
         }
+    }
+
+    public static String getStringFromArray(Object[] ar) {
+        if (ar.length == 0) {
+            return "[]";
+        }
+        if (ar.length == 1) {
+            return "[" + ar[0].toString() + "]";
+        }
+        String s = "[";
+        for (Object o : ar) {
+            s += o.toString() + ", ";
+        }
+        s = s.substring(0, s.length() - 2) + "]";
+        return s;
     }
 
 }
