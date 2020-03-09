@@ -140,21 +140,6 @@ public class AnalyzeWorker {
     }
 
     /**
-     * <b>Получить Tempo-event</b>
-     *
-     * @param midiFile файл для анализа
-     * @return Tempo-event, содержащий информацию о bpm.
-     */
-    static Tempo getTempo(MidiFile midiFile) {
-        Tempo tempo = (Tempo) (midiFile.getTracks().get(0).getEvents()).stream()
-                .filter(value -> value instanceof Tempo)
-                .findFirst()
-                .get();
-        logger.trace("Извлечён event Tempo={}", tempo);
-        return tempo;
-    }
-
-    /**
      * <b>Получить HashMap Длительность\число нот</b>
      *
      * @param track    анализируемый трек в виде списка нот.
@@ -169,7 +154,7 @@ public class AnalyzeWorker {
             logger.trace("Трек пуст, возвращёна пустая HashMap");
             return durationToCount;
         }
-        Tempo tempo = getTempo(midiFile);
+        Tempo tempo = SongUtils.getTempo(midiFile);
         float bpm = tempo.getBpm();
         logger.trace("bpm = {}", bpm);
         for (Note n : track) {

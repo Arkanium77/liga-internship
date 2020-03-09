@@ -1,8 +1,10 @@
 package ru.liga.songtask.util;
 
+import com.leff.midi.MidiFile;
 import com.leff.midi.event.MidiEvent;
 import com.leff.midi.event.NoteOff;
 import com.leff.midi.event.NoteOn;
+import com.leff.midi.event.meta.Tempo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.liga.songtask.domain.Note;
@@ -99,4 +101,18 @@ public class SongUtils {
         return s;
     }
 
+    /**
+     * <b>Получить Tempo-event</b>
+     *
+     * @param midiFile файл для анализа
+     * @return Tempo-event, содержащий информацию о bpm.
+     */
+    public static Tempo getTempo(MidiFile midiFile) {
+        Tempo tempo = (Tempo) (midiFile.getTracks().get(0).getEvents()).stream()
+                .filter(value -> value instanceof Tempo)
+                .findFirst()
+                .get();
+        logger.trace("Извлечён event Tempo={}", tempo);
+        return tempo;
+    }
 }
