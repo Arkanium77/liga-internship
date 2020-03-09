@@ -73,11 +73,15 @@ public class App {
         if (args.length > 1) {
             argsReader(args);
         } else {
-            logger.debug("Недостаточно данных для работы программы");
-            logger.info("Для запуска программы введите аргументы командной строки.\nНапример:");
-            logger.info("..\\midi-analyzer.jar \"C:\\zombie.mid\" analyze");
-            logger.info("..\\midi-analyzer.jar \"C:\\zombie.mid\" change -trans 2 -tempo 20");
+            warningAboutArguments();
         }
+    }
+
+    private static void warningAboutArguments() {
+        logger.debug("Недостаточно данных для работы программы");
+        logger.info("Для запуска программы введите аргументы командной строки.\nНапример:");
+        logger.info("..\\midi-analyzer.jar \"C:\\zombie.mid\" analyze");
+        logger.info("..\\midi-analyzer.jar \"C:\\zombie.mid\" change -trans 2 -tempo 20");
     }
 
     private static void argsReader(String[] args) throws IOException {
@@ -85,18 +89,30 @@ public class App {
         if (action.equals("analyze")) {
             analyze(args[0]);
         }
-        if (action.equals("change")) {
-            int trans;
-            double tempo;
-            try {
-                trans = Integer.parseInt(args[3]);
-            } catch (Exception e) {
-                trans = 0;
+        if (action.equals("change") && args.length == 6) {
+            int trans = 0;
+            double tempo = 0;
+            boolean errors = false;
+            if (args[2].equals("-tans")) {
+                try {
+                    trans = Integer.parseInt(args[3]);
+                } catch (Exception e) {
+                    logger.debug("Ошибка во время парсинга аргумента: {}", e.getMessage());
+                    errors = true;
+                }
             }
-            try {
-                tempo = Double.parseDouble(args[5]);
-            } catch (Exception e) {
-                tempo = 0;
+            if (args[2].equals("-tempo")) {
+                trans = 0;
+                try {
+                    tempo = Double.parseDouble(args[5]);
+                } catch (Exception e) {
+                    logger.debug("Ошибка во время парсинга аргумента: {}", e.getMessage());
+                    errors = true;
+                }
+            }
+            if (errors) {
+                warningAboutArguments();
+                return;
             }
             change(args[0], trans, tempo);
         }
