@@ -24,18 +24,6 @@ public class SongUtilsTest {
         }
     }
 
-    @Test
-    public void tickToMs() {
-    }
-
-    @Test
-    public void eventsToNotes() {
-    }
-
-    @Test
-    public void getStringFromArray() {
-    }
-
     ///////////////////////////////////////////////////
     //      getTempo(MidiFile midiFile) Test        //
     /////////////////////////////////////////////////

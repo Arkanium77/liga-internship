@@ -8,6 +8,7 @@ import ru.liga.songtask.domain.Note;
 import ru.liga.songtask.domain.NoteSign;
 import ru.liga.songtask.util.SongUtils;
 import ru.liga.songtask.worker.AnalyzeWorker;
+import ru.liga.songtask.worker.ChangeWorker;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,6 +41,13 @@ public class App {
         }
     }
 
+    /**
+     * Процедура анализа файла
+     *
+     * @param path путь к анализируемому файлу
+     * @throws IOException возникает, в случае ошибочного написания пути
+     *                     или попытке доступа к защищённому от чтения файлу.
+     */
     public static void analyze(String path) throws IOException {
         logger.debug("Запущена процедура анализа");
         MidiFile midiFile = new MidiFile(new File(path));
@@ -60,12 +68,31 @@ public class App {
         }
     }
 
-    public static void change(String path, int trans, double tempo) {
-        logger.debug("Запущена процедура изменения файла {}, " +
-                        "с транспонированием на {} полутонов и изменением темпа на {}%"
-                , path, trans, tempo
+    /**
+     * Процедура изменения файла
+     *
+     * @param path  путь к исходному файлу
+     * @param trans на сколько полутонов транспонировать
+     * @param tempo на сколько ПРОЦЕНТОВ изменить темп
+     * @throws IOException возникает в случае ошибочного написания пути или попытке доступа к защищённому файлу\директории
+     */
+    public static void change(String path, int trans, float tempo) throws IOException {
+        logger.info("Запущена процедура изменения файла {}, " +
+                        "с транспонированием на {} полутонов и изменением темпа на {}%",
+                path, trans, tempo
         );
+        File file = new File(path);
+        MidiFile midiFile = new MidiFile(file);
+        MidiFile newMidi = ChangeWorker.changeMidi(midiFile, trans, tempo);
+        String pathNew = getSavePath(trans, tempo, file);
+        newMidi.writeToFile(new File(pathNew));
+        logger.info("Изменённый файл: {}", pathNew);
+    }
 
+    private static String getSavePath(int trans, float tempo, File file) {
+        String newName = file.getName().replace(".mid", "") + "-trans" + trans + "-tempo" + tempo + ".mid";
+        logger.info("Файл успешно изменён.");
+        return file.getParentFile().getAbsolutePath() + File.separator + newName;
     }
 
     public static void main(String[] args) throws IOException {
@@ -89,11 +116,13 @@ public class App {
         if (action.equals("analyze")) {
             analyze(args[0]);
         }
+        int trans = 0;
+        float tempo = 0;
+        boolean errors = false;
         if (action.equals("change") && args.length == 6) {
-            int trans = 0;
-            double tempo = 0;
-            boolean errors = false;
-            if (args[2].equals("-tans")) {
+
+
+            if (args[2].equals("-trans")) {
                 try {
                     trans = Integer.parseInt(args[3]);
                 } catch (Exception e) {
@@ -101,21 +130,21 @@ public class App {
                     errors = true;
                 }
             }
-            if (args[2].equals("-tempo")) {
-                trans = 0;
+            if (args[4].equals("-tempo")) {
                 try {
-                    tempo = Double.parseDouble(args[5]);
+                    tempo = Float.parseFloat(args[5]);
                 } catch (Exception e) {
                     logger.debug("Ошибка во время парсинга аргумента: {}", e.getMessage());
                     errors = true;
                 }
             }
-            if (errors) {
-                warningAboutArguments();
-                return;
-            }
-            change(args[0], trans, tempo);
+
         }
+        if (errors) {
+            warningAboutArguments();
+            return;
+        }
+        change(args[0], trans, tempo);
     }
 
 }

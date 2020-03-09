@@ -13,8 +13,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import static ru.liga.songtask.util.SongUtils.eventsToNotes;
-
 public class AnalyzeWorker {
     private static Logger logger = LoggerFactory.getLogger(AnalyzeWorker.class);
 
@@ -26,25 +24,9 @@ public class AnalyzeWorker {
      */
     public static List<List<Note>> getVoiceTracks(MidiFile midiFile) {
         logger.trace("Процедура получения треков, пригодных для исполнения голосом.");
-        List<List<Note>> allTracks = getAllTracksAsNoteLists(midiFile);
+        List<List<Note>> allTracks = SongUtils.getAllTracksAsNoteLists(midiFile);
 
         return voiceTrackFinder(allTracks);
-    }
-
-    /**
-     * <b>Получить все треки в виде нотных списков</b>
-     *
-     * @param midiFile файл для извлечения треков
-     * @return {@code List<List<Note>>}, содержащий все треки ввиде списков нот.
-     */
-    public static List<List<Note>> getAllTracksAsNoteLists(MidiFile midiFile) {
-        logger.trace("Процедура извлечерия треков из файла в виде List<Notes>");
-        List<List<Note>> allTracks = new ArrayList<>();
-        for (int i = 0; i < midiFile.getTracks().size(); i++) {
-            allTracks.add(eventsToNotes(midiFile.getTracks().get(i).getEvents()));
-        }
-        logger.trace("Извлечены все треки {} из файла.", allTracks.size());
-        return allTracks;
     }
 
     /**
