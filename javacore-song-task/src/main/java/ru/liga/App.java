@@ -23,7 +23,7 @@ public class App {
     private static void getRangeWork(NoteSign[] extremum, int range) {
         logger.info("Диапазон:");
         logger.info("    Верхняя нота: " + extremum[1].fullName());
-        logger.info("    Нижняя нота: " + extremum[1].fullName());
+        logger.info("    Нижняя нота: " + extremum[0].fullName());
         logger.info("    Диапазон: " + range);
     }
 
@@ -56,7 +56,9 @@ public class App {
             logger.info("Нет треков пригодных для исполнения голосом.");
             return;
         }
+        logger.info("Найдено {} треков пригодных для исполнения голосом.", voices.size());
         for (List<Note> track : voices) {
+            logger.info("----  ▼ Трек {} ▼  ----", voices.indexOf(track) + 1);
             getRangeWork(
                     Objects.requireNonNull(
                             AnalyzeWorker.getExtremumNoteSigns(track)),
@@ -115,13 +117,12 @@ public class App {
         String action = args[1].toLowerCase().trim();
         if (action.equals("analyze")) {
             analyze(args[0]);
+            return;
         }
-        int trans = 0;
-        float tempo = 0;
+        Integer trans = null;
+        Float tempo = null;
         boolean errors = false;
         if (action.equals("change") && args.length == 6) {
-
-
             if (args[2].equals("-trans")) {
                 try {
                     trans = Integer.parseInt(args[3]);
@@ -130,6 +131,7 @@ public class App {
                     errors = true;
                 }
             }
+
             if (args[4].equals("-tempo")) {
                 try {
                     tempo = Float.parseFloat(args[5]);
@@ -140,7 +142,7 @@ public class App {
             }
 
         }
-        if (errors) {
+        if (errors || tempo == null || trans == null) {
             warningAboutArguments();
             return;
         }
