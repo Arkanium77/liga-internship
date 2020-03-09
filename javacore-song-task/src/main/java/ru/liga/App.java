@@ -89,35 +89,31 @@ public class App {
         if (action.equals("analyze")) {
             analyze(args[0]);
         }
-        if (action.equals("change")) {
-            int trans;
-            double tempo;
+        if (action.equals("change") && args.length == 6) {
+            int trans = 0;
+            double tempo = 0;
+            boolean errors = false;
             if (args[2].equals("-tans")) {
                 try {
                     trans = Integer.parseInt(args[3]);
                 } catch (Exception e) {
-                    logger.debug("Ошибка во время парсинга аргумента: {}\n по умолчанию будет установлен 0", e.getMessage());
-                    trans = 0;
+                    logger.debug("Ошибка во время парсинга аргумента: {}", e.getMessage());
+                    errors = true;
                 }
-                try {
-                    tempo = Double.parseDouble(args[5]);
-                } catch (Exception e) {
-                    logger.debug("Ошибка во время парсинга аргумента: {}\n по умолчанию будет установлен 0", e.getMessage());
-                    tempo = 0;
-                }
-            } else if (args[2].equals("-tempo")) {
+            }
+            if (args[2].equals("-tempo")) {
                 trans = 0;
                 try {
                     tempo = Double.parseDouble(args[5]);
                 } catch (Exception e) {
-                    logger.debug("Ошибка во время парсинга аргумента: {}\n по умолчанию будет установлен 0", e.getMessage());
-                    tempo = 0;
+                    logger.debug("Ошибка во время парсинга аргумента: {}", e.getMessage());
+                    errors = true;
                 }
-            } else {
+            }
+            if (errors) {
                 warningAboutArguments();
                 return;
             }
-
             change(args[0], trans, tempo);
         }
     }
