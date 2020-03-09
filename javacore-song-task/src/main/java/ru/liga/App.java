@@ -58,7 +58,7 @@ public class App {
         }
         logger.info("Найдено {} треков пригодных для исполнения голосом.", voices.size());
         for (List<Note> track : voices) {
-            logger.info("----  ▼ Трек {} ▼  ----", voices.indexOf(track) + 1);
+            logger.info("----   Трек {}   ----", voices.indexOf(track) + 1);
             getRangeWork(
                     Objects.requireNonNull(
                             AnalyzeWorker.getExtremumNoteSigns(track)),
