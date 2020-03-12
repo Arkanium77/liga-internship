@@ -40,10 +40,10 @@ public class ChangeWorker {
     public static MidiFile changeTempo(MidiFile midiFile, float percentTempo) {
         MidiFile midiFile1 = new MidiFile();
         logger.debug("Старый Bpm = {}", SongUtils.getTempo(midiFile).getBpm());
-        for (MidiTrack midiTrack : midiFile.getTracks()) {
-            MidiTrack midiTrack1 = changeTempoOfMidiTrack(percentTempo, midiTrack);
-            midiFile1.addTrack(midiTrack1);
-        }
+        midiFile.getTracks()
+                .stream()
+                .map(midiTrack -> changeTempoOfMidiTrack(percentTempo, midiTrack))
+                .forEachOrdered(midiFile1::addTrack);
 
         logger.debug("Новай Bpm = {}", SongUtils.getTempo(midiFile1).getBpm());
         return midiFile1;
@@ -77,10 +77,11 @@ public class ChangeWorker {
      */
     public static MidiFile transposeMidi(MidiFile midiFile, int trans) {
         MidiFile midiFile1 = new MidiFile();
-        for (MidiTrack midiTrack : midiFile.getTracks()) {
-            MidiTrack midiTrack1 = transposeMidiTrack(trans, midiTrack);
-            midiFile1.addTrack(midiTrack1);
-        }
+        midiFile.getTracks()
+                .stream()
+                .map(midiTrack -> transposeMidiTrack(trans, midiTrack))
+                .forEachOrdered(midiFile1::addTrack);
+
         logger.debug("Транспонирование на {} полутонов. Первая нота старого трека:{} -> Первая нота нового трека {}",
                 trans,
                 SongUtils.getAllTracksAsNoteLists(midiFile).get(0).get(0),

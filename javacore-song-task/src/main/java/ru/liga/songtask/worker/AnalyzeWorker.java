@@ -1,7 +1,6 @@
 package ru.liga.songtask.worker;
 
 import com.leff.midi.MidiFile;
-import com.leff.midi.event.meta.Tempo;
 import com.leff.midi.event.meta.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +8,6 @@ import ru.liga.songtask.domain.Note;
 import ru.liga.songtask.domain.NoteSign;
 import ru.liga.songtask.util.SongUtils;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -39,13 +37,11 @@ public class AnalyzeWorker {
      */
     private static List<List<Note>> voiceTrackFinder(List<List<Note>> allTracks) {
         logger.trace("Поиск треков пригодных для исполнения голосом.");
-        List<List<Note>> voices = new ArrayList<>();
-        for (List<Note> track : allTracks) {
-            boolean isVoice = isVoice(track);
-            if (isVoice && !track.isEmpty()) { //исключаем пустые треки
-                voices.add(track);
-            }
-        }
+        List<List<Note>> voices;
+        voices = allTracks.stream()
+                .filter(notes -> isVoice(notes) && !notes.isEmpty()) //исключаем пустые треки
+                .collect(Collectors.toList());
+
         logger.trace("Найдено {} треков пригодных для исполнения голосом.", voices.size());
         return voices;
     }
@@ -119,9 +115,7 @@ public class AnalyzeWorker {
     public static NoteSign[] getExtremumNoteSigns(List<Note> track) {
         logger.trace("Поиск экстремумов трека.");
         HashMap<Integer, Note> midiOfNotes = new HashMap<>();
-        for (Note n : track) {
-            midiOfNotes.put(n.sign().getMidi(), n);
-        }
+        track.forEach(note -> midiOfNotes.put(note.sign().getMidi(), note)); //Идея говорит stream не нужен.
         if (midiOfNotes.size() == 0) {
             logger.trace("Трек пуст, возвращён null");
             return null;
@@ -176,17 +170,16 @@ public class AnalyzeWorker {
             logger.trace("Трек пуст, возвращёна пустая HashMap");
             return durationToCount;
         }
-        Tempo tempo = SongUtils.getTempo(midiFile);
-        float bpm = tempo.getBpm();
+
+        float bpm = SongUtils.getTempo(midiFile).getBpm();
+
         logger.trace("bpm = {}", bpm);
-        for (Note n : track) {
-            Integer noteMsDuration = SongUtils.tickToMs(bpm, midiFile.getResolution(), n.durationTicks());
-            if (durationToCount.containsKey(noteMsDuration)) {
-                durationToCount.put(noteMsDuration, durationToCount.get(noteMsDuration) + 1);
-            } else {
-                durationToCount.put(noteMsDuration, 1);
-            }
-        }
+
+        track.stream()
+                .map(n -> SongUtils.tickToMs(bpm, midiFile.getResolution(), n.durationTicks())) //получаем длину каждой ноты в милисекундах
+                .collect(Collectors.groupingBy(noteDuration -> noteDuration, Collectors.counting())) //считаем количество появлений каждой длительности
+                .forEach((integer, aLong) -> durationToCount.put(integer, Math.toIntExact(aLong))); //парсим в инт и закидываем в Hashmap
+
         logger.trace("Анализ завершён. Найдено {} разных длительностей", durationToCount.size());
         return durationToCount;
     }
@@ -205,14 +198,10 @@ public class AnalyzeWorker {
             return numberOfNotes;
         }
 
-        for (Note n : track) {
-            NoteSign current = n.sign();
-            if (numberOfNotes.containsKey(current)) {
-                numberOfNotes.put(current, numberOfNotes.get(current) + 1);
-            } else {
-                numberOfNotes.put(current, 1);
-            }
-        }
+        track.stream()
+                .map(Note::sign)
+                .collect(Collectors.groupingBy(noteSign -> noteSign, Collectors.counting()))
+                .forEach((noteSign, aLong) -> numberOfNotes.put(noteSign, Math.toIntExact(aLong)));
         logger.trace("Анализ завершён. Найдено {} разных длительностей", numberOfNotes.size());
         return numberOfNotes;
     }
