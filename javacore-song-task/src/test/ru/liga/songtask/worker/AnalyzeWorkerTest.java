@@ -69,6 +69,17 @@ public class AnalyzeWorkerTest {
         Assertions.assertThat(AnalyzeWorker.getVoiceTracks(twoVoicesMidiFile).size()).isEqualTo(2);
     }
 
+    ///////////////////////////////////////////////////////////
+    //      getVoiceTrack (MidiFile midiFile) Tests        //
+    /////////////////////////////////////////////////////////
+    @Test
+    public void whenUYCTrackReturnTrueTrackVoiceTrack() {
+        List<Note> voiceTrack = AnalyzeWorker.getVoiceTrack(uYCMidiFile);
+        //voiceTrack.forEach(note -> System.out.println(note.sign().fullName()));
+        //И это тот же трек, что был найден при ручном отборе
+        Assertions.assertThat(voiceTrack.toString()).isEqualTo(uYCVoiceTrack.toString());
+    }
+
     ///////////////////////////////////////////////////////////////
     //      getAllTracksAsNoteLists(MidiFile midiFile) Test     //
     /////////////////////////////////////////////////////////////

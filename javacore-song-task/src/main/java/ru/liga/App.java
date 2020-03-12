@@ -51,23 +51,20 @@ public class App {
     public static void analyze(String path) throws IOException {
         logger.debug("Запущена процедура анализа");
         MidiFile midiFile = new MidiFile(new File(path));
-        List<List<Note>> voices = AnalyzeWorker.getVoiceTracks(midiFile);
-        if (voices.size() == 0) {
+        List<Note> track = AnalyzeWorker.getVoiceTrack(midiFile);
+        if (track.isEmpty()) {
             logger.info("Нет треков пригодных для исполнения голосом.");
             return;
         }
-        logger.info("Найдено {} треков пригодных для исполнения голосом.", voices.size());
-        for (List<Note> track : voices) {
-            logger.info("----   Трек {}   ----", voices.indexOf(track) + 1);
-            getRangeWork(
-                    Objects.requireNonNull(
-                            AnalyzeWorker.getExtremumNoteSigns(track)),
-                    Objects.requireNonNull(
-                            AnalyzeWorker.getRange(track))
-            );
-            getDurationWork(AnalyzeWorker.getDurationAnalyze(track, midiFile));
-            getNumberOfNotesWork(AnalyzeWorker.getNumberOfNotes(track));
-        }
+        track.forEach(note -> System.out.println(note.sign().fullName()));
+        getRangeWork(
+                Objects.requireNonNull(
+                        AnalyzeWorker.getExtremumNoteSigns(track)),
+                Objects.requireNonNull(
+                        AnalyzeWorker.getRange(track))
+        );
+        getDurationWork(AnalyzeWorker.getDurationAnalyze(track, midiFile));
+        getNumberOfNotesWork(AnalyzeWorker.getNumberOfNotes(track));
     }
 
     /**

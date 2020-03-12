@@ -2,6 +2,7 @@ package ru.liga.songtask.worker;
 
 import com.leff.midi.MidiFile;
 import com.leff.midi.event.meta.Tempo;
+import com.leff.midi.event.meta.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.liga.songtask.domain.Note;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AnalyzeWorker {
     private static Logger logger = LoggerFactory.getLogger(AnalyzeWorker.class);
@@ -46,6 +48,44 @@ public class AnalyzeWorker {
         }
         logger.trace("Найдено {} треков пригодных для исполнения голосом.", voices.size());
         return voices;
+    }
+
+    /**
+     * <b>Поиск трека для голоса по тексту</b>
+     *
+     * @param midiFile midi-файл для поиска
+     * @return трек, соответствующий текстовому сопровождению файла в формате List<Note>
+     */
+    public static List<Note> getVoiceTrack(MidiFile midiFile) {
+        logger.debug("Поиск трека, близкого по длинне к текстовому сопровождению.");
+        List<List<Note>> maybe = AnalyzeWorker.getVoiceTracks(midiFile);
+        long countOfTextEvents = getCountOfTextEvents(midiFile);
+        logger.debug("Всего TextEvent в файле {}", countOfTextEvents);
+
+        List<Long> difference = maybe.stream()
+                .map(notes -> Math.abs(notes.size() - countOfTextEvents))
+                .collect(Collectors.toList());
+        logger.debug("Собран список абсолютной разности между длиной пригодных для " +
+                "исполнения голосом треков и числом текстовых ивентов\n{}", difference);
+
+        long minDifference = Collections.min(difference);
+        List<Note> result = maybe.get(difference.indexOf(minDifference));
+        logger.debug("Список с минимальной разностью и есть трек для голоса. \n{}", result);
+
+        return result;
+    }
+
+    /**
+     * <b>Подсчитать общее число текстовых событий в midi-файле</b>
+     *
+     * @param midiFile midi-файл для обработки
+     * @return long-число, соответствующее числу midiEvent класса Text.
+     */
+    private static long getCountOfTextEvents(MidiFile midiFile) {
+        return midiFile.getTracks().stream()
+                .flatMap(midiTrack -> midiTrack.getEvents().stream())
+                .filter(midiEvent -> midiEvent.getClass().equals(Text.class))
+                .count();
     }
 
     /**
