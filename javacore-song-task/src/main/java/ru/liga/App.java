@@ -56,7 +56,7 @@ public class App {
             logger.info("Нет треков пригодных для исполнения голосом.");
             return;
         }
-        track.forEach(note -> System.out.println(note.sign().fullName()));
+
         getRangeWork(
                 Objects.requireNonNull(
                         AnalyzeWorker.getExtremumNoteSigns(track)),
@@ -85,12 +85,12 @@ public class App {
         MidiFile newMidi = ChangeWorker.changeMidi(midiFile, trans, tempo);
         String pathNew = getSavePath(trans, tempo, file);
         newMidi.writeToFile(new File(pathNew));
+        logger.info("Файл успешно изменён.");
         logger.info("Изменённый файл: {}", pathNew);
     }
 
     private static String getSavePath(int trans, float tempo, File file) {
         String newName = file.getName().replace(".mid", "") + "-trans" + trans + "-tempo" + tempo + ".mid";
-        logger.info("Файл успешно изменён.");
         return file.getParentFile().getAbsolutePath() + File.separator + newName;
     }
 

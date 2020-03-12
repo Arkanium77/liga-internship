@@ -10,8 +10,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.liga.songtask.util.SongUtils;
 
+import java.util.function.Predicate;
+
 public class ChangeWorker {
     static Logger logger = LoggerFactory.getLogger(ChangeWorker.class);
+    Predicate<MidiEvent> isTempo = midiEvent -> midiEvent.getClass().equals(Tempo.class);
 
     /**
      * <b>Изменить мидифайл</b>
@@ -38,30 +41,54 @@ public class ChangeWorker {
      * @return новый Midi файл
      */
     public static MidiFile changeTempo(MidiFile midiFile, float percentTempo) {
-        MidiFile midiFile1 = new MidiFile();
+        MidiFile changedTempoMidiFile = new MidiFile();
         logger.debug("Старый Bpm = {}", SongUtils.getTempo(midiFile).getBpm());
         midiFile.getTracks()
                 .stream()
                 .map(midiTrack -> changeTempoOfMidiTrack(percentTempo, midiTrack))
-                .forEachOrdered(midiFile1::addTrack);
+                .forEachOrdered(changedTempoMidiFile::addTrack);
 
-        logger.debug("Новай Bpm = {}", SongUtils.getTempo(midiFile1).getBpm());
-        return midiFile1;
+        logger.debug("Новай Bpm = {}", SongUtils.getTempo(changedTempoMidiFile).getBpm());
+        return changedTempoMidiFile;
     }
 
+    /**
+     * <b>Изменить скорость трека</b>
+     *
+     * @param percentTempo float-множитель скорости 50%=1.5 и т.д.
+     * @param midiTrack    изменяемый трек
+     * @return новый Midi трек
+     */
     private static MidiTrack changeTempoOfMidiTrack(float percentTempo, MidiTrack midiTrack) {
-        MidiTrack midiTrack1 = new MidiTrack();
-        for (MidiEvent midiEvent : midiTrack.getEvents()) {
-            if (midiEvent.getClass().equals(Tempo.class)) {
-                Tempo tempo = getChangedTempo(percentTempo, (Tempo) midiEvent);
-                midiTrack1.getEvents().add(tempo);
-            } else {
-                midiTrack1.getEvents().add(midiEvent);
-            }
-        }
-        return midiTrack1;
+        MidiTrack changedTempoMidiTrack = new MidiTrack();
+        midiTrack.getEvents()
+                .stream()
+                .map(midiEvent -> getChangedTempo(percentTempo, midiEvent))
+                .forEachOrdered(changedTempoMidiTrack::insertEvent);
+        return changedTempoMidiTrack;
     }
 
+    /**
+     * <b>Получить ивент с изменённым темпом</b>
+     *
+     * @param percentTempo float-множитель скорости 50%=1.5 и т.д.
+     * @param midiEvent    предполагаемый к изменению ивент
+     * @return если Ивент принадлежал классу Tempo - возвращает изменённый ивент, иначе оставляет его без изменений.
+     */
+    private static MidiEvent getChangedTempo(float percentTempo, MidiEvent midiEvent) {
+        if (midiEvent.getClass().equals(Tempo.class)) {
+            return getChangedTempo(percentTempo, (Tempo) midiEvent);
+        }
+        return midiEvent;
+    }
+
+    /**
+     * <b>Изменить темп события Tempo</b>
+     *
+     * @param percentTempo float-множитель скорости 50%=1.5 и т.д.
+     * @param midiEvent    изменяемый ивент.
+     * @return ивент Tempo с изменённым темпом.
+     */
     private static Tempo getChangedTempo(float percentTempo, Tempo midiEvent) {
         Tempo tempo = new Tempo(midiEvent.getTick(), midiEvent.getDelta(), midiEvent.getMpqn());
         tempo.setBpm(tempo.getBpm() * percentTempo);
@@ -90,28 +117,61 @@ public class ChangeWorker {
         return midiFile1;
     }
 
+    /**
+     * <b>Изменить миди трек</b>
+     *
+     * @param trans     на сколько полутонов изменить высоту.
+     * @param midiTrack изменяемый трек.
+     * @return новый трек с изменённой высотой нот.
+     */
     private static MidiTrack transposeMidiTrack(int trans, MidiTrack midiTrack) {
-        MidiTrack midiTrack1 = new MidiTrack();
-        for (MidiEvent midiEvent : midiTrack.getEvents()) {
-            if (midiEvent.getClass().equals(NoteOn.class)) {
-                NoteOn on = getChangedNoteOn(trans, (NoteOn) midiEvent);
-                midiTrack1.getEvents().add(on);
-            } else if (midiEvent.getClass().equals(NoteOff.class)) {
-                NoteOff off = getChangedNoteOff(trans, (NoteOff) midiEvent);
-                midiTrack1.getEvents().add(off);
-            } else {
-                midiTrack1.getEvents().add(midiEvent);
-            }
-        }
-        return midiTrack1;
+
+        MidiTrack transposedMidiTrack = new MidiTrack();
+        midiTrack.getEvents()
+                .stream()
+                .map(midiEvent -> getChangedNote(trans, midiEvent))
+                .forEachOrdered(transposedMidiTrack::insertEvent);
+        return transposedMidiTrack;
     }
 
+    /**
+     * <b>Получить изменённую ноту</b>
+     *
+     * @param trans     на сколько полутонов менять высоту.
+     * @param midiEvent предполагаемый к изменению ивент.
+     * @return если ивент класса NoteOn\NoteOff возвращает изменённое соответствующими методами событие
+     * иначе возвращает событие без изменений.
+     */
+    private static MidiEvent getChangedNote(int trans, MidiEvent midiEvent) {
+        if (midiEvent.getClass().equals(NoteOn.class)) {
+            return getChangedNoteOn(trans, (NoteOn) midiEvent);
+        }
+        if (midiEvent.getClass().equals(NoteOff.class)) {
+            return getChangedNoteOff(trans, (NoteOff) midiEvent);
+        }
+        return midiEvent;
+    }
+
+    /**
+     * <b>Изменить высоту мобытия NoteOff</b>
+     *
+     * @param trans     на сколько полутонов менять высоту.
+     * @param midiEvent изменяемое событие NoteOff
+     * @return событие класса noteOff с изменённой высотой.
+     */
     private static NoteOff getChangedNoteOff(int trans, NoteOff midiEvent) {
         NoteOff off = new NoteOff(midiEvent.getTick(), midiEvent.getDelta(), midiEvent.getChannel(), midiEvent.getNoteValue(), midiEvent.getVelocity());
         off.setNoteValue(off.getNoteValue() + trans);
         return off;
     }
 
+    /**
+     * <b>Изменить высоту мобытия NoteOn</b>
+     *
+     * @param trans     на сколько полутонов менять высоту.
+     * @param midiEvent изменяемое событие NoteOn
+     * @return событие класса noteOn с изменённой высотой.
+     */
     private static NoteOn getChangedNoteOn(int trans, NoteOn midiEvent) {
         NoteOn on = new NoteOn(midiEvent.getTick(), midiEvent.getDelta(), midiEvent.getChannel(), midiEvent.getNoteValue(), midiEvent.getVelocity());
         on.setNoteValue(on.getNoteValue() + trans);
